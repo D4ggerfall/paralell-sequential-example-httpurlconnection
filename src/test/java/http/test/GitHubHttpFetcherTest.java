@@ -5,10 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class GitHubHttpFetcherTest {
 
@@ -24,10 +21,8 @@ public class GitHubHttpFetcherTest {
     public void testFileReading(){
 
         List<String> result = githubHttpFetcher.readFromFileAndAssembleList(resourceUri);
-        System.out.println(result.get(1));
-
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(4,result.size());
+        Assertions.assertEquals(3,result.size());
     }
 
     @Test
@@ -40,8 +35,15 @@ public class GitHubHttpFetcherTest {
 
     @Test
     public void testHttpRequestCompleteableFuture() {
-        long result = githubHttpFetcher.countCommitsParalellStream(githubHttpFetcher.readFromFileAndAssembleList(resourceUri));
-        System.out.println(result);
-        Assertions.assertTrue(true);
+        int result = githubHttpFetcher.countCommitsCompletableFuture(githubHttpFetcher.readFromFileAndAssembleList(resourceUri));
+        Assertions.assertTrue(result > 10000);
     }
+
+    @Test
+    public void testExecutionsYieldSameResult(){
+        int res1 = githubHttpFetcher.countCommitsSequential(githubHttpFetcher.readFromFileAndAssembleList(resourceUri));
+        int res2 = githubHttpFetcher.countCommitsCompletableFuture(githubHttpFetcher.readFromFileAndAssembleList(resourceUri));
+        Assertions.assertEquals(res1,res2);
+    }
+
 }

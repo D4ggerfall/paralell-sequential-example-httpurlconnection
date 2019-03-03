@@ -11,12 +11,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class GithubHttpFetcher {
 
     private final String gitHubBaseUrl = "https://api.github.com/repos/";
     private HttpURLConnection connection;
+    private ArrayList<Integer> resultList = new ArrayList<>();
 
 
     public GithubHttpFetcher(){
@@ -51,29 +51,28 @@ public class GithubHttpFetcher {
         return sum;
     }
 
-    public int countCommitsParalellStream(List<String> urls){
+    public int countCommitsCompletableFuture(List<String> urls){
+        resultList.clear();
 
-        return urls.stream().parallel()
-                .mapToInt(s -> {
-                    try {
-                        CompletableFuture<Integer> future = CompletableFuture
-                                .supplyAsync(() -> this.doHttpRequestAndCountCommits(s));
-                        return future.get();
-                    }
-                    catch (Exception e){
-                        e.printStackTrace();
-                        return 0;
-                    }
+        for(String url:urls){
+            try {
+                CompletableFuture<Integer> future = CompletableFuture.supplyAsync(() -> doHttpRequestAndCountCommits(url));
+                addToResults(future.get());
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
 
-                })
-                .sum();
-
+        return resultList.stream().parallel().mapToInt(value -> value).sum();
     }
 
-    //Just used to play around with completeablefuture thenaccept
-    private int countSum(int currentSum, int tobeAdded){
-        return currentSum + tobeAdded;
+
+    //Doesn't really serve much of a purpose, here to play around with completeablefuture
+    private void addToResults(Integer toAdd){
+        resultList.add(toAdd);
     }
+
 
     private int doHttpRequestAndCountCommits(String url){
         int sum = 0;
